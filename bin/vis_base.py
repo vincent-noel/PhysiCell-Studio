@@ -455,6 +455,8 @@ class VisBase():
 
         # self.config_file = "mymodel.xml"
         self.physiboss_node_dict = {}
+        self.physiboss_previous_node = None
+        self.physiboss_previous_cells = None
         
         self.reset_model_flag = True
         self.xmin = -80
@@ -1305,7 +1307,7 @@ class VisBase():
             
             self.physiboss_vis_checkbox = QCheckBox_custom('Color by PhysiBoSS node state')
             self.physiboss_vis_flag = False
-            self.physiboss_vis_checkbox.setEnabled(not self.plot_cells_svg)
+            self.physiboss_vis_checkbox.setEnabled(True)
             self.physiboss_vis_checkbox.setChecked(self.physiboss_vis_flag)
             self.physiboss_vis_checkbox.clicked.connect(self.physiboss_vis_toggle_cb)
             self.physiboss_hbox_1.addWidget(self.physiboss_vis_checkbox)
@@ -1366,10 +1368,27 @@ class VisBase():
         self.physiboss_vis_flag = bval
         self.physiboss_cell_type_combobox.setEnabled(bval)
         self.physiboss_node_combobox.setEnabled(bval)
+        self.physiboss_population_counts_button.setEnabled(bval)
+        
+        if bval:
+            self.physiboss_previous_cells = self.plot_cells_svg
+            self.plot_cells_svg = False
+            self.cells_svg_rb.setChecked(False)
+            self.cells_mat_rb.setChecked(False)
+            self.cell_scalar_combobox.setEnabled(False)
+            self.cell_scalar_cbar_combobox.setEnabled(False)
+            
+        else:
+            self.plot_cells_svg = self.physiboss_previous_cells
+            self.cells_svg_rb.setChecked(self.plot_cells_svg)
+            self.cells_mat_rb.setChecked(not self.plot_cells_svg)
+            self.cell_scalar_combobox.setEnabled(not self.plot_cells_svg)
+            self.cell_scalar_cbar_combobox.setEnabled(not self.plot_cells_svg)
+            
+            
         self.cell_scalar_combobox.setEnabled(not bval)
         self.cell_scalar_cbar_combobox.setEnabled(not bval)
-        self.physiboss_population_counts_button.setEnabled(bval)
-
+        
         self.update_plots()
         
     def physiboss_vis_cell_type_cb(self, idx):
@@ -1558,7 +1577,7 @@ class VisBase():
             self.cells_cmin.setEnabled(True)
             self.cells_cmax.setEnabled(True)
             if self.physiboss_vis_checkbox is not None:
-                self.physiboss_vis_checkbox.setEnabled(True)
+                self.physiboss_vis_checkbox.setChecked(False)
 
         # print("\n>>> calling update_plots() from "+ inspect.stack()[0][3])
         self.update_plots()
@@ -2115,6 +2134,9 @@ class VisBase():
         self.cells_svg_rb.setEnabled(bval)
         self.cells_mat_rb.setEnabled(bval)
         # self.cell_edge_checkbox.setEnabled(bval)
+
+        if self.physiboss_vis_checkbox is not None:
+            self.physiboss_vis_checkbox.setEnabled(bval)
 
         # these widgets depend on whether we're using .mat (scalars)
         if bval:
