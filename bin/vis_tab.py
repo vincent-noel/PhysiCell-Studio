@@ -50,7 +50,6 @@ import matplotlib
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
 # from PyQt5 import QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -83,8 +82,8 @@ class Vis(VisBase, QWidget):
         self.bgcolor = [1,1,1,1]  # all 1.0 for white 
 
         # self.population_plot = None
-        self.celltype_name = []
-        self.celltype_color = []
+        self.celltype_name = []    #defined but not used?
+        self.celltype_color = []    #defined but not used?
 
         self.animating_flag = False
 
@@ -717,7 +716,7 @@ class Vis(VisBase, QWidget):
         # print(cell_scalar_name, " - discrete: ", (cell_scalar % 1  == 0).all()) # Possible test if the variable is discrete or continuum variable (issue: in some time the continuum variable can be classified as discrete (example time=0))
         
         # if( cell_scalar_name == 'cell_type' or cell_scalar_name == 'current_phase'): discrete_variable = list(set(cell_scalar)) # It's a set of possible value of the variable
-        if cell_scalar_name in self.discrete_cell_scalars: 
+        if cell_scalar_name in self.discrete_cell_scalars:
             discrete_variable = list(set(cell_scalar)) # It's a set of possible value of the variable
         # if( discrete_variable ): # Generic way: if variable is discrete
             self.cell_scalar_cbar_combobox.setEnabled(False)
