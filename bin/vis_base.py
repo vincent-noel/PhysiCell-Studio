@@ -956,6 +956,14 @@ class VisBase():
         #------------------
         self.vbox.addWidget(QHLine())
 
+        self.attachments_checkbox = QCheckBox_custom('attachments')
+        self.attachments_checkbox.setChecked(False)
+        self.attachments_checkbox.clicked.connect(self.attachments_toggle_cb)
+        self.attachments_checked_flag = False
+        self.vbox.addWidget(self.attachments_checkbox)
+        #------------------
+        self.vbox.addWidget(QHLine())
+
         hbox = QHBoxLayout()
         label = QLabel("folder")
         label.setAlignment(QtCore.Qt.AlignRight)
@@ -1648,6 +1656,9 @@ class VisBase():
         self.discrete_variable_observed = set()
         self.update_plots()
     
+    def attachments_toggle_cb(self, bval):
+        self.attachments_checked_flag = bval
+        self.update_plots()
     #-------------------------------------
     def output_folder_cb(self):
         print(f"output_folder_cb(): old={self.output_dir}")
