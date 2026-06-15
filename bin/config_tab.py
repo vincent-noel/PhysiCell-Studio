@@ -536,6 +536,75 @@ class Config(StudioTab):
 
         vbox.addLayout(hbox)
 
+
+
+        #---------------------
+        
+        label = QLabelSeparator("PhysiBoSS Initial Conditions")
+        # label.setFixedHeight(label_height)
+        label.setStyleSheet("background-color: orange")
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        idx_row = 0
+        vbox.addWidget(label) # w, row, column, rowspan, colspan
+
+
+        hbox = QHBoxLayout()
+        self.ic_physiboss_enabled = QCheckBox_custom("enable")
+        self.ic_physiboss_enabled.setFixedWidth(100)
+        self.ic_physiboss_enabled.setEnabled(True)
+        self.ic_physiboss_enabled.setChecked(False)
+        self.ic_physiboss_enabled.clicked.connect(self.ic_physiboss_enabled_clicked)
+        hbox.addWidget(self.ic_physiboss_enabled)
+        
+        
+        # hbox.addStretch(1)
+
+
+        label = QLabel("type")
+        label.setAlignment(QtCore.Qt.AlignRight)
+        hbox.addWidget(label)
+        
+        self.ic_physiboss_dropdown = QComboBox()
+        self.ic_physiboss_dropdown.setFixedWidth(200)
+        self.ic_physiboss_dropdown.setStyleSheet(style_sheet_template(QComboBox))
+        self.ic_physiboss_dropdown.addItem("States")
+        self.ic_physiboss_dropdown.addItem("CFG files")
+        self.ic_physiboss_dropdown.addItem("BND & CFG files")
+        self.ic_physiboss_dropdown.setEnabled(False)
+        hbox.addWidget(self.ic_physiboss_dropdown)
+        
+        # hbox.addStretch(1)
+
+        label = QLabel("folder")
+        label.setAlignment(QtCore.Qt.AlignRight)
+        hbox.addWidget(label)
+        self.ic_physiboss_csv_folder = QLineEdit()
+        self.ic_physiboss_csv_folder.setFixedWidth(filename_width)
+        self.ic_physiboss_csv_folder.setStyleSheet(style_sheet_template(QLineEdit))
+        self.ic_physiboss_csv_folder.setEnabled(False)
+        hbox.addWidget(self.ic_physiboss_csv_folder)
+        
+        label = QLabel("file")
+        label.setAlignment(QtCore.Qt.AlignRight)
+        hbox.addWidget(label)
+
+        self.ic_physiboss_csv_file = QLineEdit()
+        self.ic_physiboss_csv_file.setFixedWidth(filename_width)
+        self.ic_physiboss_csv_file.setStyleSheet(style_sheet_template(QLineEdit))
+        self.ic_physiboss_csv_file.setEnabled(False)
+        hbox.addWidget(self.ic_physiboss_csv_file)
+        
+        self.ic_physiboss_csv_file_button = QPushButton("Import")
+        self.ic_physiboss_csv_file_button.setFixedWidth(100)
+        self.ic_physiboss_csv_file_button.setStyleSheet("background-color: lightgreen; color: black")
+        self.ic_physiboss_csv_file_button.clicked.connect(self.ic_physiboss_csv_file_button_clicked)
+        self.ic_physiboss_csv_file_button.setEnabled(False)
+        hbox.addWidget(self.ic_physiboss_csv_file_button)
+        hbox.addStretch()
+
+        vbox.addLayout(hbox)
+
+
         #============  Cell behavior flags ================================
         label = QLabelSeparator("Cells' global behaviors")
         label.setFixedHeight(label_height)
@@ -819,16 +888,29 @@ class Config(StudioTab):
         #     self.mechanics_voxel_size.setText(self.default_mechanics_voxel_size)
 
         uep = self.xml_root.find(".//initial_conditions//cell_positions")
-        if uep == None:  # not present
-            return
-        self.csv_folder.setText(self.xml_root.find(".//initial_conditions//cell_positions//folder").text)
-        self.csv_file.setText(self.xml_root.find(".//initial_conditions//cell_positions//filename").text)
-        bval = False
-        if uep.attrib['enabled'].lower() == 'true':
-            bval = True
-        self.cells_csv.setChecked(bval)
-        self.cells_csv_clicked(bval)
+        if uep is not None:  # not present
+                
+            self.csv_folder.setText(self.xml_root.find(".//initial_conditions//cell_positions//folder").text)
+            self.csv_file.setText(self.xml_root.find(".//initial_conditions//cell_positions//filename").text)
+            bval = False
+            if uep.attrib['enabled'].lower() == 'true':
+                bval = True
+            self.cells_csv.setChecked(bval)
+            self.cells_csv_clicked(bval)
 
+        uep = self.xml_root.find(".//initial_conditions//intracellular_states")
+        if uep is None:  # not present
+            return
+        if uep.attrib['type'].lower() == 'maboss':
+            values = ["states", "cfg", "bndcfg"]
+            self.ic_physiboss_enabled.setChecked(True)
+            self.ic_physiboss_dropdown.setEnabled(True)
+            self.ic_physiboss_csv_folder.setEnabled(True)
+            self.ic_physiboss_csv_file.setEnabled(True)
+            self.ic_physiboss_csv_file_button.setEnabled(True)
+            self.ic_physiboss_dropdown.setCurrentIndex(values.index(uep.attrib['values'].lower()))
+            self.ic_physiboss_csv_folder.setText(self.xml_root.find(".//initial_conditions//intracellular_states//folder").text)
+            self.ic_physiboss_csv_file.setText(self.xml_root.find(".//initial_conditions//intracellular_states//filename").text)
 
 
     # Read values from the GUI widgets and generate/write a new XML
@@ -1067,6 +1149,14 @@ class Config(StudioTab):
         # else:
         #     self.xml_root.find(".//initial_conditions//cell_positions/filename").text = 'all_cells_above_y0.csv'
 
+        if self.ic_physiboss_enabled.isChecked():
+            self.xml_root.find(".//initial_conditions//intracellular_states").attrib['enabled'] = 'true'
+            self.xml_root.find(".//initial_conditions//intracellular_states").attrib['type'] = 'maboss'
+            values = ["states", "cfg", "bndcfg"]
+            self.xml_root.find(".//initial_conditions//intracellular_states").attrib['values'] = values[self.ic_physiboss_dropdown.currentIndex()]
+            self.xml_root.find(".//initial_conditions//intracellular_states//folder").text = self.ic_physiboss_csv_folder.text()
+            self.xml_root.find(".//initial_conditions//intracellular_states//filename").text = self.ic_physiboss_csv_file.text()
+
 
         # TODO: verify valid type (numeric) and range?
         # xml_root.find(".//x_min").text = str(self.xmin.value)
@@ -1129,6 +1219,52 @@ class Config(StudioTab):
 
         else:
             print("import_seeding_cb():  full_path_model_name is NOT valid")
+
+    def ic_physiboss_enabled_clicked(self, bval):
+        self.ic_physiboss_dropdown.setEnabled(bval)
+        self.ic_physiboss_csv_folder.setEnabled(bval)
+        self.ic_physiboss_csv_file.setEnabled(bval)
+        self.ic_physiboss_csv_file_button.setEnabled(bval)
+
+    def ic_physiboss_csv_file_button_clicked(self):
+        
+        filePath = QFileDialog.getOpenFileName(self,'',".")
+        full_path_rules_name = filePath[0]
+
+        print(f'ic_physiboss_csv_file_button_clicked():  full_path_rules_name ={full_path_rules_name}')
+
+        basename = os.path.basename(full_path_rules_name)
+        print(f'ic_physiboss_csv_file_button_clicked():  basename ={basename}')
+        dirname = os.path.dirname(full_path_rules_name)
+        print(f'ic_physiboss_csv_file_button_clicked():  dirname ={dirname}')
+        # if (len(full_path_rules_name) > 0) and Path(full_path_rules_name):
+        if (len(full_path_rules_name) > 0) and Path(full_path_rules_name).is_file():
+            print("ic_physiboss_csv_file_button_clicked():  filePath is valid")
+            # logging.debug(f'     filePath is valid')
+            print("len(full_path_rules_name) = ", len(full_path_rules_name) )
+            # logging.debug(f'     len(full_path_rules_name) = {len(full_path_rules_name)}' )
+            self.ic_physiboss_csv_folder.setText(dirname)
+            self.ic_physiboss_csv_file.setText(basename)
+            # fname = os.path.basename(full_path_rules_name)
+            # self.current_xml_file = full_path_rules_name
+
+            # self.add_new_model(self.current_xml_file, True)
+            # self.config_file = self.current_xml_file
+            # if self.xml_creator.studio_flag:
+            #     self.run_tab.config_file = self.current_xml_file
+            #     self.run_tab.config_xml_name.setText(self.current_xml_file)
+            # self.show_sample_model()
+            # self.fill_gui()
+
+            # arg! how does it not catch this as an invalid file above??
+            # in fill_rules():  full_rules_fname= /Users/heiland/git/data/tumor_rules.csv
+            print(f'ic_physiboss_csv_file_button_clicked():  (guess) calling fill_rules() with ={full_path_rules_name}')
+            # if not self.nanohub_flag:
+            #     full_path_rules_name = os.path.abspath(os.path.join(self.homedir,'tmpdir',folder_name, file_name))
+            #     print(f'ic_physiboss_csv_file_button_clicked():  NOW calling fill_rules() with ={full_path_rules_name}')
+
+        else:
+            print("ic_physiboss_csv_file_button_clicked():  full_path_model_name is NOT valid")
 
     def fill_substrates_comboboxes(self):
         logging.debug(f'cell_def_tab.py: ------- fill_substrates_comboboxes')
